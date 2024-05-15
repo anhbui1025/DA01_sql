@@ -14,7 +14,38 @@ from job_count
 where job_count > 1
 
 ---Bài tâp 2----
+WITH appliance_highest_spend AS (
+  SELECT
+    category,
+    product,
+    SUM(spend) AS total_spend
+  FROM product_spend
+  WHERE category = 'appliance'
+    AND transaction_date BETWEEN '2022-01-01' AND '2022-12-31'
+  GROUP BY category, product
+  ORDER BY SUM(spend) DESC
+  LIMIT 2
+),
+electronics_highest_spend AS (
+  SELECT
+    category,
+    product,
+    SUM(spend) AS total_spend
+  FROM product_spend
+  WHERE category = 'electronics'
+    AND transaction_date BETWEEN '2022-01-01' AND '2022-12-31'
+  GROUP BY category, product
+  ORDER BY SUM(spend) DESC
+  LIMIT 2
+)
 
+SELECT category, product, total_spend
+FROM (
+  SELECT * FROM appliance_highest_spend
+  UNION ALL
+  SELECT * FROM electronics_highest_spend
+) combined_result
+ORDER BY category, total_spend DESC;
 
 ---Bài tâp 3----
 WITH policy_holder_count AS
@@ -38,7 +69,22 @@ group by p.page_id
 order by p.page_id asc
 
 ---Bài tâp 5----
+WITH june_active_users AS (
+  SELECT DISTINCT user_id
+  FROM user_actions
+  WHERE event_date BETWEEN '2022-06-01' AND '2022-06-30'
+),
+july_active_users AS (
+  SELECT DISTINCT user_id
+  FROM user_actions
+  WHERE event_date BETWEEN '2022-07-01' AND '2022-07-31'
+)
 
+SELECT
+  7 AS month,
+  COUNT(DISTINCT user_id) AS monthly_active_users
+FROM july_active_users
+INNER JOIN june_active_users USING (user_id);
 
 ---Bài tâp 6----
 with approved_transactions as 
