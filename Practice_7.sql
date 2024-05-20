@@ -41,6 +41,38 @@ where rn = 1
 group by transaction_date, user_id
 
 ---Bài tập 5---
+with Tweet_Lags as (
+    select
+        user_id,
+        tweet_date,
+        tweet_count,
+        lag(tweet_count, 1) over (partition by user_id order by tweet_date) as tweet_count_1_day_ago,
+        lag(tweet_count, 2) over (partition by user_id order by tweet_date) as tweet_count_2_days_ago
+    from tweets
+),
+Rolling_Averages as (
+    select
+        user_id,
+        tweet_date,
+        tweet_count,
+        tweet_count_1_day_ago,
+        tweet_count_2_days_ago,
+        round(cast((tweet_count +
+                 case when tweet_count_1_day_ago is not null then tweet_count_1_day_ago else 0 end +
+                 CASE WHEN tweet_count_2_days_ago is not null then tweet_count_2_days_ago else 0 end
+                ) as decimal) / 
+              cast((1 +
+                 case when tweet_count_1_day_ago is not null then 1 else 0 end +
+                 CASE WHEN tweet_count_2_days_ago is not null then 1 else 0 end
+                ) as decimal), 2) as rolling_avg_3d
+    from Tweet_Lags
+)
+select 
+    user_id,
+    tweet_date,
+    rolling_avg_3d
+from Rolling_Averages
+order by user_id, tweet_date;
 
 ---Bài tập 6---
 select count(merchant_id) as payment_count
